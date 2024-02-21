@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Pre-requisites') {
+            steps {
+                echo 'Checking pre-requisites'
+            }
+        }
+        stage('Checkout'){
+            steps{
+                checkout scmGit(branches: [[name: 'main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/learnfromopensource/devops']])
+                sh 'cat test.bash'
+            }
+        }
+        stage('Deploying docker image'){
+            steps{
+                sh 'sudo docker build . -t learnfromopensource/test:1.0'
+            }
+        }
+        stage('Push docker image'){
+            steps{
+                withCredentials([string(credentialsId: 'f8322e26-d4b1-4097-ad62-98b22a856302', variable: 'dockerhubpwd')]) {
+                     sh 'sudo docker login -u learnfromopensource -p ${dockerhubpwd}'
+                     sh 'sudo docker push learnfromopensource/test:1.0'
+                }
+            }
+        }
+    }
+}
